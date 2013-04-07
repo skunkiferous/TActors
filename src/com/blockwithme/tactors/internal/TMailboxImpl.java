@@ -137,4 +137,12 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
         cacheTime();
         return logicalTime;
     }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.tactors.TimeSource#nanoTime()
+     */
+    @Override
+    public long nanoTime() {
+        return getMailboxFactory().nanoTime();
+    }
 }

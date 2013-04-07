@@ -98,6 +98,14 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
     }
 
     /* (non-Javadoc)
+     * @see com.blockwithme.tactors.TimeSource#nanoTime()
+     */
+    @Override
+    public long nanoTime() {
+        return timeSource.nanoTime();
+    }
+
+    /* (non-Javadoc)
      * @see com.blockwithme.tactors.TMailboxFactory#id()
      */
     @Override

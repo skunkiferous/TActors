@@ -55,6 +55,7 @@ public interface TMailbox extends PAMailbox, TimeSource {
 
     /**
      * Returns the frozen (adjusted) real time.
+     * It should be in the GMT time zone.
      *
      * Frozen means that while processing a message, the time should not change.
      * This method is not thread-safe, and must only be called from within the Mailbox.
@@ -63,7 +64,7 @@ public interface TMailbox extends PAMailbox, TimeSource {
     long realTime();
 
     /**
-     * Returns the frozen logical time.
+     * Returns the frozen logical application time.
      *
      * Frozen means that while processing a message, the time should not change.
      * This method is not thread-safe, and must only be called from within the Mailbox.

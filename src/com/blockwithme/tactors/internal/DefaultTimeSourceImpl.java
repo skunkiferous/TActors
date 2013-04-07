@@ -15,43 +15,52 @@
  */
 package com.blockwithme.tactors.internal;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.concurrent.atomic.AtomicLong;
 
-import com.blockwithme.tactors.TimeSource;
+import com.blockwithme.tactors.UpdatableTimeSource;
 
 /**
- * Default implementation for a TimeSource.
+ * Default implementation for a UpdatableTimeSource.
  *
  * This class must be thread-safe.
  *
  * @author monster
  */
-@ParametersAreNonnullByDefault
-public class DefaultTimeSourceImpl implements TimeSource {
+public class DefaultTimeSourceImpl extends BaseTimeSourceImpl implements
+        UpdatableTimeSource {
 
-    /**
-     *
-     */
-    public DefaultTimeSourceImpl() {
-        // TODO Auto-generated constructor stub
-    }
-
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#realTime()
-     */
-    @Override
-    public long realTime() {
-        // TODO Make sure the time never goes backward!
-        // TODO Make sure to catch large jumps, and adjust appropriately.
-        return System.currentTimeMillis();
-    }
+    /** System time in nanoseconds, at JVM start. */
+    private final AtomicLong logicalTime = new AtomicLong();
 
     /* (non-Javadoc)
      * @see com.blockwithme.tactors.TimeSource#logicalTime()
      */
     @Override
     public long logicalTime() {
-        // TODO Implement logical time.
-        return realTime();
+        return logicalTime.get();
+    }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.tactors.UpdatableTimeSource#setLogicalTime(long)
+     */
+    @Override
+    public void setLogicalTime(final long newTime) {
+        logicalTime.set(newTime);
+    }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.tactors.UpdatableTimeSource#setLogicalTime(long, long)
+     */
+    @Override
+    public boolean setLogicalTime(final long oldTime, final long newTime) {
+        return logicalTime.compareAndSet(oldTime, newTime);
+    }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.tactors.UpdatableTimeSource#offsetLogicalTime(long)
+     */
+    @Override
+    public long offsetLogicalTime(final long delta) {
+        return logicalTime.addAndGet(delta);
     }
 }

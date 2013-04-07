@@ -16,20 +16,27 @@
 package com.blockwithme.tactors;
 
 /**
- * Some entity that has it's own notion of time.
- *
- * TODO Most likely, we would want some kind of listener mechanism,
- * to possible time updates.
+ * A TimeSource that allows updating the logical time.
  *
  * @author monster
  */
-public interface TimeSource {
-    /** Returns the (adjusted) real time. It should be in the GMT time zone. */
-    long realTime();
+public interface UpdatableTimeSource extends TimeSource {
+    /**
+     * Set the logical time.
+     * In a running application, this could cause problems.
+     */
+    void setLogicalTime(long newTime);
 
-    /** Returns the logical application time. */
-    long logicalTime();
+    /**
+     * Set the logical time, but only if it has the expected old value.
+     * In a running application, this could cause problems.
+     * @return true, if the logical time was updated.
+     */
+    boolean setLogicalTime(long oldTime, long newTime);
 
-    /** The elapsed time in nanoseconds, since the JVM stated. */
-    long nanoTime();
+    /**
+     * Modifies the logical time by the give number of units,
+     * and returns the new value.
+     */
+    long offsetLogicalTime(long delta);
 }
