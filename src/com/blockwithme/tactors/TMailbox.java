@@ -24,6 +24,10 @@ import org.agilewiki.pamailbox.PAMailbox;
  * The main reason for Mailboxes to be TimeSource, is that the logical time
  * must not change while the Mailbox is processing a request/response.
  *
+ * TODO Now that all Mailbox are weakly referenced, we could add lifecycles to them.
+ *
+ * TODO Should a Mailbox be an actor too?
+ *
  * @author monster
  */
 public interface TMailbox extends PAMailbox, TimeSource {

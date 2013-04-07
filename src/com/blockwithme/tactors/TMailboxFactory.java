@@ -22,6 +22,8 @@ import org.agilewiki.pamailbox.PAMailboxFactory;
  *
  * Typically, there would be one per JVM, or one per application, in an application server.
  *
+ * TODO Should a TMailboxFactory be an actor too?
+ *
  * @author monster
  */
 public interface TMailboxFactory extends PAMailboxFactory, TimeSource {

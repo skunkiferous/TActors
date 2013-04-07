@@ -20,6 +20,8 @@ import org.agilewiki.pactor.Actor;
 /**
  * Base interface for all temporal actors.
  *
+ * TODO Now that all TActor are weakly referenced, we could add lifecycles to them.
+ *
  * @author monster
  */
 public interface TActor extends Actor {

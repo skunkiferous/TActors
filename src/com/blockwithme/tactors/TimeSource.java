@@ -19,7 +19,7 @@ package com.blockwithme.tactors;
  * Some entity that has it's own notion of time.
  *
  * TODO Most likely, we would want some kind of listener mechanism,
- * to possible time updates.
+ * to possible time updates. Something like the java.util.Timer Class.
  *
  * @author monster
  */
