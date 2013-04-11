@@ -64,7 +64,7 @@ public interface TMailboxFactory extends PAMailboxFactory, TimeSource {
      */
     long id();
 
-    /** Returns the mailbox with the given ID, if any. */
+    /** Returns the mailbox with the given ID (Mailbox ID or Actor ID), if any. */
     TMailbox findMailbox(long id);
 
     /** Returns the actor with the given ID, if any. */

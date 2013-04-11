@@ -25,6 +25,7 @@ import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
 import com.blockwithme.tactors.TimeSource;
+import com.blockwithme.util.Provider;
 
 /**
  * TMailboxFactoryImpl implements the TMailboxFactory interface.
@@ -49,17 +50,30 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
     /** The Mailbox ID counter. */
     private final AtomicLong nextID = new AtomicLong();
 
+    /** The factory. */
+    private final Provider<LongObjectCache<TActor>> cacheProvider;
+
     /** All the Mailboxes. */
-    private final LongObjectCache<TMailbox> mailboxes = new LongObjectCache<TMailbox>();
+    private final LongObjectCache<TMailbox> mailboxes;
+
+    /** Returns a new actor cache. */
+    protected LongObjectCache<TActor> newActorCache() {
+        return cacheProvider.get();
+    }
 
     /** Constructor */
-    public TMailboxFactoryImpl(final long theID, final TimeSource theTimeSource) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public TMailboxFactoryImpl(final long theID,
+            final TimeSource theTimeSource,
+            final Provider<LongObjectCache<?>> theCacheProvider) {
         id = theID;
         timeSource = theTimeSource;
+        cacheProvider = (Provider) theCacheProvider;
+        mailboxes = (LongObjectCache<TMailbox>) theCacheProvider.get();
     }
 
     /** Returns the next Mailbox ID. */
-    public long nextMailboxID(final TMailbox mailbox) {
+    public final long nextMailboxID(final TMailbox mailbox) {
         final long result = nextID.incrementAndGet();
         if (result >= INVALID_ID) {
             throw new InternalError("Maximum valid Email ID exceeded!");
@@ -68,24 +82,11 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
         return result;
     }
 
-    /**
-     * Actually instantiate the Mailbox.
-     * Can be overridden, to create application-specific Mailbox instances.
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    protected M createMailbox(final boolean _mayBlock, final Runnable _onIdle,
-            final Runnable _messageProcessor, final MessageQueue messageQueue,
-            final Logger _log, final int _initialBufferSize) {
-        return (M) new TMailboxImpl(_mayBlock, _onIdle, _messageProcessor,
-                this, messageQueue, _log, _initialBufferSize);
-    }
-
     /* (non-Javadoc)
      * @see com.blockwithme.tactors.TimeSource#realTime()
      */
     @Override
-    public long realTime() {
+    public final long realTime() {
         return timeSource.realTime();
     }
 
@@ -93,7 +94,7 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
      * @see com.blockwithme.tactors.TimeSource#logicalTime()
      */
     @Override
-    public long logicalTime() {
+    public final long logicalTime() {
         return timeSource.logicalTime();
     }
 
@@ -101,7 +102,7 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
      * @see com.blockwithme.tactors.TimeSource#nanoTime()
      */
     @Override
-    public long nanoTime() {
+    public final long nanoTime() {
         return timeSource.nanoTime();
     }
 
@@ -109,20 +110,34 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
      * @see com.blockwithme.tactors.TMailboxFactory#id()
      */
     @Override
-    public long id() {
+    public final long id() {
         return id;
     }
 
-    /** Returns the mailbox with the given ID, if any. */
+    /** Returns the mailbox with the given ID (Mailbox ID or Actor ID), if any. */
     @Override
-    public TMailbox findMailbox(final long mailboxID) {
+    public final TMailbox findMailbox(final long mailboxID) {
         return mailboxes.findObject(mailboxID & MB_ID_MASK);
     }
 
     /** Returns the actor with the given ID, if any. */
     @Override
-    public TActor findActor(final long actorID) {
+    public final TActor findActor(final long actorID) {
         final TMailbox mb = findMailbox(actorID);
         return (mb == null) ? null : mb.findActor(actorID);
+    }
+
+    /**
+     * Actually instantiate the Mailbox.
+     * Can be overridden, to create application-specific Mailbox instances.
+     * newActorCache() will provide the actor cache.
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    protected M createMailbox(final boolean _mayBlock, final Runnable _onIdle,
+            final Runnable _messageProcessor, final MessageQueue messageQueue,
+            final Logger _log, final int _initialBufferSize) {
+        return (M) new TMailboxImpl(_mayBlock, _onIdle, _messageProcessor,
+                this, messageQueue, _log, _initialBufferSize, newActorCache());
     }
 }

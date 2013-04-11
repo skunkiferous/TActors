@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.blockwithme.tactors.internal;
+package com.blockwithme.tactors;
+
+import org.agilewiki.pactor.Request;
 
 /**
- * Weak object cache, where each object has a unique, immutable long ID.
- * No hard reference is kept for the object, therefore allowing GC.
+ * A temporal Request.
  *
  * @author monster
  */
-public interface LongObjectCache<E> {
-    /** Returns the object with the ID, if any. */
-    E findObject(final long id);
+public interface TRequest<RESPONSE_TYPE> extends Request<RESPONSE_TYPE> {
 
-    /** Adds the Object with the ID. */
-    void cacheObject(final long id, final E obj);
+    /** @see org.agilewiki.pactor.Request#getMailbox() */
+    @Override
+    TMailbox getMailbox();
 }

@@ -51,7 +51,7 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     private final long id;
 
     /** All the actors. */
-    private final LongObjectCache<TActor> actors = new LongObjectCache<TActor>();
+    private final LongObjectCache<TActor> actors;
 
     /**
      * @param _mayBlock
@@ -66,10 +66,11 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
             final Runnable _messageProcessor,
             final TMailboxFactoryImpl<?> factory,
             final MessageQueue messageQueue, final Logger _log,
-            final int _initialBufferSize) {
+            final int _initialBufferSize, final LongObjectCache<TActor> _actors) {
         super(_mayBlock, _onIdle, _messageProcessor, factory, messageQueue,
                 _log, _initialBufferSize);
         id = factory.nextMailboxID(this);
+        actors = _actors;
     }
 
     @Override

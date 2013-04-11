@@ -15,7 +15,7 @@
  */
 package com.blockwithme.tactors.internal;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.blockwithme.tactors.UpdatableTimeSource;
 
@@ -30,14 +30,18 @@ public class DefaultTimeSourceImpl extends BaseTimeSourceImpl implements
         UpdatableTimeSource {
 
     /** System time in nanoseconds, at JVM start. */
-    private final AtomicLong logicalTime = new AtomicLong();
+    private final AtomicReference<Long> logicalTime = new AtomicReference<Long>();
 
     /* (non-Javadoc)
      * @see com.blockwithme.tactors.TimeSource#logicalTime()
      */
     @Override
     public long logicalTime() {
-        return logicalTime.get();
+        final Long result = logicalTime.get();
+        if (result == null) {
+            throw new IllegalStateException("Logical time not set yet!");
+        }
+        return result;
     }
 
     /* (non-Javadoc)
@@ -61,6 +65,12 @@ public class DefaultTimeSourceImpl extends BaseTimeSourceImpl implements
      */
     @Override
     public long offsetLogicalTime(final long delta) {
-        return logicalTime.addAndGet(delta);
+        while (true) {
+            final long oldTime = logicalTime();
+            final long newTime = oldTime + delta;
+            if (setLogicalTime(oldTime, newTime)) {
+                return logicalTime();
+            }
+        }
     }
 }

@@ -24,12 +24,27 @@ package com.blockwithme.tactors;
  * @author monster
  */
 public interface TimeSource {
-    /** Returns the (adjusted) real time. It should be in the GMT time zone. */
+    /**
+     * Returns the (adjusted) real time. It should be in the GMT time zone.
+     * It will never go backward, but might not be updated outside of a
+     * logical time update.
+     */
     long realTime();
 
-    /** Returns the logical application time. */
+    /**
+     * Returns the logical application time.
+     * It should can go backward, if the application logic allows it, and the
+     * frequency of updates depends on the application, and might even vary in
+     * some cases. This method will throw an exception if accessed before the
+     * application time was set.
+     */
     long logicalTime();
 
-    /** The elapsed time in nanoseconds, since the JVM stated. */
+    /**
+     * The elapsed time in nanoseconds, since the JVM stated.
+     * It will also never go backward, and is independent on the logical
+     * time. Behavior when the host computer goes out of "standby mode"
+     * is undefined (jump/no jump).
+     */
     long nanoTime();
 }

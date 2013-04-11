@@ -16,6 +16,7 @@
 package com.blockwithme.tactors;
 
 import org.agilewiki.pactor.Actor;
+import org.agilewiki.pautil.Ancestor;
 
 /**
  * Base interface for all temporal actors.
@@ -24,10 +25,10 @@ import org.agilewiki.pactor.Actor;
  *
  * @author monster
  */
-public interface TActor extends Actor {
+public interface TActor<M extends TMailbox> extends Actor, Ancestor {
     /** @see org.agilewiki.pactor.Actor#getMailbox() */
     @Override
-    public TMailbox getMailbox();
+    public M getMailbox();
 
     /**
      * Returns the Actor ID. It will be within [Long.MIN_VALUE,Long.MAX_VALUE], but not 0.
@@ -35,4 +36,13 @@ public interface TActor extends Actor {
      */
     long id();
 
+    /** The parent of a TActor is always another TActor, or null. */
+    @Override
+    TActor<?> getParent();
+
+    /**
+     * Creates a copy of this actor, with the given new Mailbox.
+     * If the mailbox is null, the current mailbox is used.
+     */
+    TActor<M> copy(M mailbox);
 }
