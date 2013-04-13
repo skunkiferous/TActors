@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.blockwithme.tactors.internal;
+package com.blockwithme.tactors;
 
 /**
- * Weak object cache, where each object has a unique, immutable long ID.
- * No hard reference is kept for the object, therefore allowing GC.
+ * MBOwner must be implemented by any mailbox owner.
+ *
+ * A mailbox owner is the first actor to be registered on a mailbox.
+ *
+ * The goal of this interface is to force users to remember that the first
+ * actor is the owner, *and gets a hard reference* from the mailbox.
  *
  * @author monster
  */
-public interface LongObjectCache<E> {
-    /** Returns the object with the ID, if any. */
-    E findObject(final long id);
-
-    /** Adds the Object with the ID. */
-    void cacheObject(final long id, final E obj);
+public interface MBOwner<M extends TMailbox> extends TActor<M> {
+    // NOP
 }

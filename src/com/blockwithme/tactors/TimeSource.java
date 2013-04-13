@@ -15,6 +15,8 @@
  */
 package com.blockwithme.tactors;
 
+import org.threeten.bp.ZonedDateTime;
+
 /**
  * Some entity that has it's own notion of time.
  *
@@ -25,11 +27,18 @@ package com.blockwithme.tactors;
  */
 public interface TimeSource {
     /**
-     * Returns the (adjusted) real time. It should be in the GMT time zone.
+     * Returns the local/UTC time, in nano-seconds.
      * It will never go backward, but might not be updated outside of a
      * logical time update.
      */
-    long realTime();
+    long currentTimeNanos(boolean utc);
+
+    /**
+     * Returns the local/UTC time, in nano-seconds, as an ZonedDateTime.
+     * It will never go backward, but might not be updated outside of a
+     * logical time update.
+     */
+    ZonedDateTime now(boolean utc);
 
     /**
      * Returns the logical application time.
@@ -39,12 +48,4 @@ public interface TimeSource {
      * application time was set.
      */
     long logicalTime();
-
-    /**
-     * The elapsed time in nanoseconds, since the JVM stated.
-     * It will also never go backward, and is independent on the logical
-     * time. Behavior when the host computer goes out of "standby mode"
-     * is undefined (jump/no jump).
-     */
-    long nanoTime();
 }

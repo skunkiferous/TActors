@@ -34,6 +34,10 @@ public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
     /** The actor ID. */
     protected final long id;
 
+    /** The actor name. If defined, it will be unique within the mailbox. */
+    protected final String name;
+
+    /** The actor parent, if any. */
     protected final TActor<?> parent;
 
     /** The listeners support. */
@@ -42,30 +46,40 @@ public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
     /**
      * Initialize the actor with a Mailbox.
      */
-    protected TActorBase(final M theMailbox, final long theID) {
-        this(theMailbox, theID, null);
+    protected TActorBase(final M theMailbox, final boolean pin) {
+        this(theMailbox, null, null, pin);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     */
+    protected TActorBase(final M theMailbox, final String theName,
+            final boolean pin) {
+        this(theMailbox, theName, null, pin);
     }
 
     /**
      * Initialize the actor with a Mailbox.
      * Null is a valid parent.
      */
-    protected TActorBase(final M theMailbox, final long theID,
-            final TActor<?> theParent) {
-        this(theMailbox, theID, theParent, new TActorListenerSupportImpl(
-                theMailbox));
+    protected TActorBase(final M theMailbox, final String theName,
+            final TActor<?> theParent, final boolean pin) {
+        this(theMailbox, theName, theParent, new TActorListenerSupportImpl(
+                theMailbox), pin);
     }
 
     /**
      * Initialize the actor with a Mailbox.
      * Null is a valid parent.
      */
-    protected TActorBase(final M theMailbox, final long theID,
-            final TActor<?> theParent, final TActorListenerSupport theSupport) {
+    protected TActorBase(final M theMailbox, final String theName,
+            final TActor<?> theParent, final TActorListenerSupport theSupport,
+            final boolean pin) {
         mailbox = Preconditions.checkNotNull(theMailbox);
         support = Preconditions.checkNotNull(theSupport);
-        id = theID;
+        name = theName;
         parent = theParent;
+        id = mailbox.nextActorID(this, pin);
     }
 
     /* (non-Javadoc)
@@ -90,6 +104,22 @@ public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
     @Override
     public final long id() {
         return id;
+    }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.tactors.TActor#name()
+     */
+    @Override
+    public final String name() {
+        return name;
+    }
+
+    /* (non-Javadoc)
+     * @see org.agilewiki.pautil.Named#getActorName()
+     */
+    @Override
+    public final String getActorName() {
+        return name;
     }
 
     /* (non-Javadoc)

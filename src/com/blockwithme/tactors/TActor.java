@@ -15,8 +15,9 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pactor.Actor;
-import org.agilewiki.pautil.Ancestor;
+import org.agilewiki.pautil.Named;
+
+import com.blockwithme.util.IDedAndNamed;
 
 /**
  * Base interface for all temporal actors.
@@ -25,7 +26,7 @@ import org.agilewiki.pautil.Ancestor;
  *
  * @author monster
  */
-public interface TActor<M extends TMailbox> extends Actor, Ancestor {
+public interface TActor<M extends TMailbox> extends Named, IDedAndNamed {
     /** @see org.agilewiki.pactor.Actor#getMailbox() */
     @Override
     public M getMailbox();
@@ -34,7 +35,12 @@ public interface TActor<M extends TMailbox> extends Actor, Ancestor {
      * Returns the Actor ID. It will be within [Long.MIN_VALUE,Long.MAX_VALUE], but not 0.
      * It is derived from the Mailbox ID.
      */
+    @Override
     long id();
+
+    /** Returns the actor name. If defined, it will be unique within the mailbox. */
+    @Override
+    String name();
 
     /** The parent of a TActor is always another TActor, or null. */
     @Override

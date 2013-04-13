@@ -15,11 +15,12 @@
  */
 package com.blockwithme.tactors.internal;
 
-import java.util.Calendar;
-import java.util.TimeZone;
-import java.util.concurrent.atomic.AtomicLong;
+import org.threeten.bp.Clock;
+import org.threeten.bp.ZonedDateTime;
 
 import com.blockwithme.tactors.TimeSource;
+import com.blockwithme.util.CurrentTimeNanos;
+import com.blockwithme.util.NanoClock;
 
 /**
  * Abstract implementation for a TimeSource.
@@ -46,59 +47,31 @@ import com.blockwithme.tactors.TimeSource;
  */
 public abstract class BaseTimeSourceImpl implements TimeSource {
 
-    /** The GMT time zone. Should make use immune to DST ... */
-    private static final TimeZone GMT_TIME_ZONE = TimeZone.getTimeZone("GMT");
+    /** The UTC clock. */
+    private static final Clock UTC = NanoClock.systemUTC();
 
-    /** System time in nanoseconds, at JVM start. */
-    private static final AtomicLong NANO_TIME_OFFSET = new AtomicLong(
-            System.nanoTime());
+    /** The LOCAL clock. */
+    private static final Clock LOCAL = NanoClock.systemDefaultZone();
 
-    /** Time in nanoseconds, at last call. */
-    private static final AtomicLong LAST_NANO_TIME = new AtomicLong(
-            NANO_TIME_OFFSET.get());
-
-    /** GMT Time in milliseconds, at last call. */
-    private static final AtomicLong LAST_GMT_TIME = new AtomicLong(Calendar
-            .getInstance(GMT_TIME_ZONE).getTimeInMillis());
-
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#realTime()
+    /**
+     * Returns the local/UTC time, in nano-seconds.
+     * It will never go backward, but might not be updated outside of a
+     * logical time update.
      */
     @Override
-    public long realTime() {
-        while (true) {
-            // TODO Make sure to catch large jumps, and adjust appropriately.
-            final long last = LAST_GMT_TIME.get();
-            final long now = Calendar.getInstance(GMT_TIME_ZONE)
-                    .getTimeInMillis();
-            if (now >= last) {
-                if (LAST_GMT_TIME.compareAndSet(last, now)) {
-                    return now;
-                }
-            } else {
-                // Ouch! Time went backward!
-                return last;
-            }
-        }
+    public final long currentTimeNanos(final boolean utc) {
+        return utc ? CurrentTimeNanos.utcTimeNanos() : CurrentTimeNanos
+                .currentTimeNanos();
     }
 
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#nanoTime()
+    /**
+     * Returns the local/UTC time, in nano-seconds, as an ZonedDateTime.
+     * It will never go backward, but might not be updated outside of a
+     * logical time update.
      */
     @Override
-    public long nanoTime() {
-        while (true) {
-            // TODO Make sure to catch large jumps, and adjust appropriately.
-            final long last = LAST_NANO_TIME.get();
-            final long now = System.nanoTime();
-            if (now >= last) {
-                if (LAST_NANO_TIME.compareAndSet(last, now)) {
-                    return now - NANO_TIME_OFFSET.get();
-                }
-            } else {
-                // Ouch! System.nanoTime() went backward!
-                return last - NANO_TIME_OFFSET.get();
-            }
-        }
+    public final ZonedDateTime now(final boolean utc) {
+        return utc ? UTC.instant().atZone(UTC.getZone()) : LOCAL.instant()
+                .atZone(LOCAL.getZone());
     }
 }

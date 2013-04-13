@@ -23,6 +23,8 @@ import org.agilewiki.pamailbox.PAMailbox;
  *
  * The main reason for Mailboxes to be TimeSource, is that the logical time
  * must not change while the Mailbox is processing a request/response.
+ * The time is effectively "frozen". Because of this, the TimeSource methods
+ * are NOT thread-safe in Mailbox, and can only be called from within the Mailbox.
  *
  * TODO Now that all Mailbox are weakly referenced, we could add lifecycles to them.
  *
@@ -41,38 +43,16 @@ public interface TMailbox extends PAMailbox, TimeSource {
     TMailbox createPort(final Mailbox _source, int size);
 
     /**
-     * Returns the Mailbox ID. It will be within [Integer.MIN_VALUE,Integer.MAX_VALUE], but not 0.
-     *
-     * This is a transient ID generated at runtime. It is guaranteed to be unique within this TSystem instance.
+     * Generates the next Actor ID, register that actor under that ID,
+     * and returns the ID. If the actor has a non-null name, it will be
+     * registered too.
      */
-    long id();
+    long nextActorID(TActor<?> actor, boolean pin);
 
     /**
-     * Returns the next Actor ID.
-     *
-     * This method is not thread-safe, and must only be called from within the Mailbox.
+     * Returns the Mailbox owner. This is the first actor created for this
+     * Mailbox. The reference prevents the owner from being CGed, as long as
+     * something else references the Mailbox.
      */
-    long nextActorID(TActor actor);
-
-    /** Returns the actor with the given ID, if any. */
-    TActor findActor(long id);
-
-    /**
-     * Returns the frozen (adjusted) real time.
-     * It should be in the GMT time zone.
-     *
-     * Frozen means that while processing a message, the time should not change.
-     * This method is not thread-safe, and must only be called from within the Mailbox.
-     */
-    @Override
-    long realTime();
-
-    /**
-     * Returns the frozen logical application time.
-     *
-     * Frozen means that while processing a message, the time should not change.
-     * This method is not thread-safe, and must only be called from within the Mailbox.
-     */
-    @Override
-    long logicalTime();
+    MBOwner<?> owner();
 }

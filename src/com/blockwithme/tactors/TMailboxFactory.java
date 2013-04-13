@@ -64,10 +64,17 @@ public interface TMailboxFactory extends PAMailboxFactory, TimeSource {
      */
     long id();
 
-    /** Returns the mailbox with the given ID (Mailbox ID or Actor ID), if any. */
-    TMailbox findMailbox(long id);
+    /**
+     * Generates the next Actor ID, register that actor under that ID,
+     * and returns the ID. If the actor has a non-null name, it will be
+     * registered too.
+     */
+    long nextActorID(TActor<?> actor, boolean pin);
 
     /** Returns the actor with the given ID, if any. */
-    TActor findActor(long id);
+    TActor<?> findActor(long id);
+
+    /** Returns the actor with the given name, if any. */
+    TActor<?> findActor(String name);
 
 }

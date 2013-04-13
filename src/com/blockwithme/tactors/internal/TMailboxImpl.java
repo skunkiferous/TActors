@@ -15,15 +15,24 @@
  */
 package com.blockwithme.tactors.internal;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.agilewiki.pactor.Mailbox;
 import org.agilewiki.pamailbox.MailboxImpl;
 import org.agilewiki.pamailbox.Message;
 import org.agilewiki.pamailbox.MessageQueue;
 import org.slf4j.Logger;
+import org.threeten.bp.Instant;
+import org.threeten.bp.ZoneId;
+import org.threeten.bp.ZoneOffset;
+import org.threeten.bp.ZonedDateTime;
 
+import com.blockwithme.tactors.MBOwner;
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
+import com.blockwithme.util.CurrentTimeNanos;
+import com.blockwithme.util.NanoClock;
 
 /**
  * TMailboxImpl implements the TMailbox interface.
@@ -32,11 +41,20 @@ import com.blockwithme.tactors.TMailboxFactory;
  */
 public class TMailboxImpl extends MailboxImpl implements TMailbox {
 
-    /** First invalid ID. */
-    private static final long INVALID_ID = 0x100000000L;
+    /** System Default ZoneId */
+    private static final ZoneId LOCAL = ZoneId.systemDefault();
 
-    /** The cached real time. */
-    private long realTime;
+    /** The cached local time in nanos. */
+    private long localTime;
+
+    /** The cached Instant. */
+    private Instant instant;
+
+    /** The cached local time in nanos, as a ZonedDateTime. */
+    private ZonedDateTime localNow;
+
+    /** The cached UTC time in nanos, as a ZonedDateTime. */
+    private ZonedDateTime utcNow;
 
     /** The cached logical time. */
     private long logicalTime;
@@ -44,14 +62,8 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     /** Was the time cached? */
     private boolean timeCached;
 
-    /** The Actor ID counter. */
-    private long nextID;
-
-    /** My Mailbox ID. */
-    private final long id;
-
-    /** All the actors. */
-    private final LongObjectCache<TActor> actors;
+    /** The owner. */
+    private final AtomicReference<MBOwner<?>> owner = new AtomicReference<>();
 
     /**
      * @param _mayBlock
@@ -66,42 +78,19 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
             final Runnable _messageProcessor,
             final TMailboxFactoryImpl<?> factory,
             final MessageQueue messageQueue, final Logger _log,
-            final int _initialBufferSize, final LongObjectCache<TActor> _actors) {
+            final int _initialBufferSize) {
         super(_mayBlock, _onIdle, _messageProcessor, factory, messageQueue,
                 _log, _initialBufferSize);
-        id = factory.nextMailboxID(this);
-        actors = _actors;
     }
 
     @Override
-    public TMailboxFactory getMailboxFactory() {
+    public final TMailboxFactory getMailboxFactory() {
         return (TMailboxFactory) super.getMailboxFactory();
     }
 
     @Override
-    public TMailboxImpl createPort(final Mailbox _source, final int size) {
+    public final TMailboxImpl createPort(final Mailbox _source, final int size) {
         return (TMailboxImpl) super.createPort(_source, size);
-    }
-
-    @Override
-    public long nextActorID(final TActor actor) {
-        final long next = ++nextID;
-        if (next >= INVALID_ID) {
-            throw new InternalError("Maximum valid Actor ID exceeded!");
-        }
-        final long result = (next << 32L) | id;
-        actors.cacheObject(result, actor);
-        return result;
-    }
-
-    @Override
-    public TActor findActor(final long actorID) {
-        return actors.findObject(actorID);
-    }
-
-    @Override
-    public long id() {
-        return id;
     }
 
     /** Called after running processXXXMessage(Message). */
@@ -116,8 +105,10 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
         if (!timeCached) {
             timeCached = true;
             final TMailboxFactory fac = getMailboxFactory();
-            realTime = fac.realTime();
+            localTime = fac.currentTimeNanos(false);
             logicalTime = fac.logicalTime();
+            localNow = utcNow = null;
+            instant = null;
         }
     }
 
@@ -125,25 +116,62 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
      * @see com.blockwithme.tactors.TimeSource#realTime()
      */
     @Override
-    public long realTime() {
+    public final long currentTimeNanos(final boolean utc) {
         cacheTime();
-        return realTime;
+        return utc ? (localTime + CurrentTimeNanos.getLocalToUTCOffsetNS())
+                : localTime;
+    }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.tactors.TimeSource#now(boolean)
+     */
+    @Override
+    public final ZonedDateTime now(final boolean utc) {
+        // both instant, utcNow and localNow are lazy-created, but based on frozen time.
+        if (instant == null) {
+            instant = NanoClock.instant(localTime);
+        }
+        if (utc) {
+            if (utcNow == null) {
+                utcNow = instant.atZone(ZoneOffset.UTC);
+            }
+            return utcNow;
+        }
+        if (localNow == null) {
+            localNow = instant.atZone(LOCAL);
+        }
+        return utcNow;
     }
 
     /* (non-Javadoc)
      * @see com.blockwithme.tactors.TimeSource#logicalTime()
      */
     @Override
-    public long logicalTime() {
+    public final long logicalTime() {
         cacheTime();
         return logicalTime;
     }
 
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#nanoTime()
+    @Override
+    public final MBOwner<?> owner() {
+        return owner.get();
+    }
+
+    /**
+     * Generates the next Actor ID, register that actor under that ID,
+     * and returns the ID. If the actor has a non-null name, it will be
+     * registered too.
      */
     @Override
-    public long nanoTime() {
-        return getMailboxFactory().nanoTime();
+    public final long nextActorID(final TActor<?> actor, final boolean pin) {
+        if (actor instanceof MBOwner<?>) {
+            // owner will only be set for the first registered actor.
+            owner.compareAndSet(null, (MBOwner<?>) actor);
+        } else if (owner.get() == null) {
+            throw new IllegalStateException(
+                    "First registered actor is not a MBOwner");
+        }
+        final long result = getMailboxFactory().nextActorID(actor, pin);
+        return result;
     }
 }

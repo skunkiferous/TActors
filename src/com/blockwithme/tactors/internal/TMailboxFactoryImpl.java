@@ -20,12 +20,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.agilewiki.pamailbox.DefaultMailboxFactoryImpl;
 import org.agilewiki.pamailbox.MessageQueue;
 import org.slf4j.Logger;
+import org.threeten.bp.ZonedDateTime;
 
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
 import com.blockwithme.tactors.TimeSource;
-import com.blockwithme.util.Provider;
+import com.blockwithme.util.LongObjectCache;
+import com.google.common.base.Preconditions;
 
 /**
  * TMailboxFactoryImpl implements the TMailboxFactory interface.
@@ -34,12 +36,6 @@ import com.blockwithme.util.Provider;
  */
 public class TMailboxFactoryImpl<M extends TMailbox> extends
         DefaultMailboxFactoryImpl<M> implements TMailboxFactory {
-
-    /** First invalid ID. */
-    private static final long INVALID_ID = 0x100000000L;
-
-    /** Mask used to extract the Mailbox ID from an actor ID. */
-    private static final long MB_ID_MASK = INVALID_ID - 1L;
 
     /** The globally unique ID for this TMailboxFactory. */
     private final long id;
@@ -50,44 +46,32 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
     /** The Mailbox ID counter. */
     private final AtomicLong nextID = new AtomicLong();
 
-    /** The factory. */
-    private final Provider<LongObjectCache<TActor>> cacheProvider;
-
-    /** All the Mailboxes. */
-    private final LongObjectCache<TMailbox> mailboxes;
-
-    /** Returns a new actor cache. */
-    protected LongObjectCache<TActor> newActorCache() {
-        return cacheProvider.get();
-    }
+    /** All the actors. */
+    private final LongObjectCache<TActor<?>> actors;
 
     /** Constructor */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public TMailboxFactoryImpl(final long theID,
             final TimeSource theTimeSource,
-            final Provider<LongObjectCache<?>> theCacheProvider) {
+            final LongObjectCache<TActor<?>> theCache) {
         id = theID;
-        timeSource = theTimeSource;
-        cacheProvider = (Provider) theCacheProvider;
-        mailboxes = (LongObjectCache<TMailbox>) theCacheProvider.get();
-    }
-
-    /** Returns the next Mailbox ID. */
-    public final long nextMailboxID(final TMailbox mailbox) {
-        final long result = nextID.incrementAndGet();
-        if (result >= INVALID_ID) {
-            throw new InternalError("Maximum valid Email ID exceeded!");
-        }
-        mailboxes.cacheObject(result, mailbox);
-        return result;
+        timeSource = Preconditions.checkNotNull(theTimeSource, "theTimeSource");
+        actors = Preconditions.checkNotNull(theCache, "theCache");
     }
 
     /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#realTime()
+     * @see com.blockwithme.tactors.TimeSource#currentTimeNanos(boolean)
      */
     @Override
-    public final long realTime() {
-        return timeSource.realTime();
+    public final long currentTimeNanos(final boolean utc) {
+        return timeSource.currentTimeNanos(utc);
+    }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.tactors.TimeSource#now(boolean)
+     */
+    @Override
+    public final ZonedDateTime now(final boolean utc) {
+        return timeSource.now(utc);
     }
 
     /* (non-Javadoc)
@@ -99,14 +83,6 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
     }
 
     /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#nanoTime()
-     */
-    @Override
-    public final long nanoTime() {
-        return timeSource.nanoTime();
-    }
-
-    /* (non-Javadoc)
      * @see com.blockwithme.tactors.TMailboxFactory#id()
      */
     @Override
@@ -114,17 +90,29 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
         return id;
     }
 
-    /** Returns the mailbox with the given ID (Mailbox ID or Actor ID), if any. */
     @Override
-    public final TMailbox findMailbox(final long mailboxID) {
-        return mailboxes.findObject(mailboxID & MB_ID_MASK);
+    public long nextActorID(final TActor<?> actor, final boolean pin) {
+        if (actor.id() != 0) {
+            throw new IllegalStateException("Actor already registered! "
+                    + actor);
+        }
+        final long result = nextID.incrementAndGet();
+        if (result == 0) {
+            // This is NEVER going to happen!
+            throw new InternalError("Maximum valid Actor ID exceeded!");
+        }
+        actors.cacheObject(result, actor.name(), actor, pin);
+        return result;
     }
 
-    /** Returns the actor with the given ID, if any. */
     @Override
-    public final TActor findActor(final long actorID) {
-        final TMailbox mb = findMailbox(actorID);
-        return (mb == null) ? null : mb.findActor(actorID);
+    public TActor<?> findActor(final long actorID) {
+        return actors.findObject(actorID);
+    }
+
+    @Override
+    public TActor<?> findActor(final String name) {
+        return actors.findObject(name);
     }
 
     /**
@@ -138,6 +126,6 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
             final Runnable _messageProcessor, final MessageQueue messageQueue,
             final Logger _log, final int _initialBufferSize) {
         return (M) new TMailboxImpl(_mayBlock, _onIdle, _messageProcessor,
-                this, messageQueue, _log, _initialBufferSize, newActorCache());
+                this, messageQueue, _log, _initialBufferSize);
     }
 }
