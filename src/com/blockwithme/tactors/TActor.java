@@ -15,6 +15,7 @@
  */
 package com.blockwithme.tactors;
 
+import org.agilewiki.pautil.Ancestor;
 import org.agilewiki.pautil.Named;
 
 import com.blockwithme.util.IDedAndNamed;
@@ -26,7 +27,8 @@ import com.blockwithme.util.IDedAndNamed;
  *
  * @author monster
  */
-public interface TActor<M extends TMailbox> extends Named, IDedAndNamed {
+public interface TActor<M extends TMailbox> extends Named, Ancestor,
+        IDedAndNamed {
     /** @see org.agilewiki.pactor.Actor#getMailbox() */
     @Override
     public M getMailbox();

@@ -31,8 +31,8 @@ import com.blockwithme.tactors.MBOwner;
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
-import com.blockwithme.util.CurrentTimeNanos;
-import com.blockwithme.util.NanoClock;
+import com.blockwithme.time.CurrentTimeNanos;
+import com.blockwithme.time.NanoClock;
 
 /**
  * TMailboxImpl implements the TMailbox interface.
@@ -44,8 +44,8 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     /** System Default ZoneId */
     private static final ZoneId LOCAL = ZoneId.systemDefault();
 
-    /** The cached local time in nanos. */
-    private long localTime;
+    /** The cached utc time in nanos. */
+    private long utcTime;
 
     /** The cached Instant. */
     private Instant instant;
@@ -105,7 +105,7 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
         if (!timeCached) {
             timeCached = true;
             final TMailboxFactory fac = getMailboxFactory();
-            localTime = fac.currentTimeNanos(false);
+            utcTime = fac.currentTimeNanos(true);
             logicalTime = fac.logicalTime();
             localNow = utcNow = null;
             instant = null;
@@ -118,8 +118,7 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     @Override
     public final long currentTimeNanos(final boolean utc) {
         cacheTime();
-        return utc ? (localTime + CurrentTimeNanos.getLocalToUTCOffsetNS())
-                : localTime;
+        return utc ? utcTime : CurrentTimeNanos.utcNanoToLocalNano(utcTime);
     }
 
     /* (non-Javadoc)
@@ -129,7 +128,7 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     public final ZonedDateTime now(final boolean utc) {
         // both instant, utcNow and localNow are lazy-created, but based on frozen time.
         if (instant == null) {
-            instant = NanoClock.instant(localTime);
+            instant = NanoClock.instant(utcTime);
         }
         if (utc) {
             if (utcNow == null) {

@@ -19,8 +19,8 @@ import org.threeten.bp.Clock;
 import org.threeten.bp.ZonedDateTime;
 
 import com.blockwithme.tactors.TimeSource;
-import com.blockwithme.util.CurrentTimeNanos;
-import com.blockwithme.util.NanoClock;
+import com.blockwithme.time.CurrentTimeNanos;
+import com.blockwithme.time.NanoClock;
 
 /**
  * Abstract implementation for a TimeSource.
@@ -61,7 +61,7 @@ public abstract class BaseTimeSourceImpl implements TimeSource {
     @Override
     public final long currentTimeNanos(final boolean utc) {
         return utc ? CurrentTimeNanos.utcTimeNanos() : CurrentTimeNanos
-                .currentTimeNanos();
+                .localTimeNanos();
     }
 
     /**

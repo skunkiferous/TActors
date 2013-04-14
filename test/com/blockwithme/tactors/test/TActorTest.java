@@ -63,7 +63,7 @@ public class TActorTest extends TestCase {
         public long id;
 
         @Override
-        public String getActorName() throws Exception {
+        public String getActorName() {
             return null;
         }
 

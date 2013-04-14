@@ -235,6 +235,11 @@
 			<artifactId>Common</artifactId>
 			<version>0.0.5</version>
 		</dependency>
+		<dependency>
+			<groupId>com.blockwithme</groupId>
+			<artifactId>Time</artifactId>
+			<version>0.0.1</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
