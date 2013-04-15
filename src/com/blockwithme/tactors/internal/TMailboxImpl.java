@@ -31,8 +31,7 @@ import com.blockwithme.tactors.MBOwner;
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
-import com.blockwithme.time.CurrentTimeNanos;
-import com.blockwithme.time.NanoClock;
+import com.blockwithme.time.Clock;
 
 /**
  * TMailboxImpl implements the TMailbox interface.
@@ -118,7 +117,10 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     @Override
     public final long currentTimeNanos(final boolean utc) {
         cacheTime();
-        return utc ? utcTime : CurrentTimeNanos.utcNanoToLocalNano(utcTime);
+        if (utc) {
+            return utcTime;
+        }
+        return Clock.toLocalMillis(utcTime / 1000000L) + (utcTime % 1000000L);
     }
 
     /* (non-Javadoc)
@@ -128,7 +130,7 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     public final ZonedDateTime now(final boolean utc) {
         // both instant, utcNow and localNow are lazy-created, but based on frozen time.
         if (instant == null) {
-            instant = NanoClock.instant(utcTime);
+            instant = Clock.nanosToInstant(utcTime);
         }
         if (utc) {
             if (utcNow == null) {

@@ -15,12 +15,10 @@
  */
 package com.blockwithme.tactors.internal;
 
-import org.threeten.bp.Clock;
 import org.threeten.bp.ZonedDateTime;
 
 import com.blockwithme.tactors.TimeSource;
-import com.blockwithme.time.CurrentTimeNanos;
-import com.blockwithme.time.NanoClock;
+import com.blockwithme.time.Clock;
 
 /**
  * Abstract implementation for a TimeSource.
@@ -47,12 +45,6 @@ import com.blockwithme.time.NanoClock;
  */
 public abstract class BaseTimeSourceImpl implements TimeSource {
 
-    /** The UTC clock. */
-    private static final Clock UTC = NanoClock.systemUTC();
-
-    /** The LOCAL clock. */
-    private static final Clock LOCAL = NanoClock.systemDefaultZone();
-
     /**
      * Returns the local/UTC time, in nano-seconds.
      * It will never go backward, but might not be updated outside of a
@@ -60,8 +52,7 @@ public abstract class BaseTimeSourceImpl implements TimeSource {
      */
     @Override
     public final long currentTimeNanos(final boolean utc) {
-        return utc ? CurrentTimeNanos.utcTimeNanos() : CurrentTimeNanos
-                .localTimeNanos();
+        return utc ? Clock.currentTimeNanos() : Clock.localCurrentTimeNanos();
     }
 
     /**
@@ -71,7 +62,11 @@ public abstract class BaseTimeSourceImpl implements TimeSource {
      */
     @Override
     public final ZonedDateTime now(final boolean utc) {
-        return utc ? UTC.instant().atZone(UTC.getZone()) : LOCAL.instant()
-                .atZone(LOCAL.getZone());
+        if (utc) {
+            final org.threeten.bp.Clock clock = Clock.clock();
+            return clock.instant().atZone(clock.getZone());
+        }
+        final org.threeten.bp.Clock clock = Clock.localClock();
+        return clock.instant().atZone(clock.getZone());
     }
 }
