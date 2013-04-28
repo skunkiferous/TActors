@@ -17,21 +17,16 @@ package com.blockwithme.tactors.internal;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.agilewiki.pactor.Mailbox;
-import org.agilewiki.pamailbox.MailboxImpl;
-import org.agilewiki.pamailbox.Message;
-import org.agilewiki.pamailbox.MessageQueue;
+import org.agilewiki.pactor.api.Mailbox;
+import org.agilewiki.pactor.impl.MailboxImpl;
+import org.agilewiki.pactor.impl.Message;
+import org.agilewiki.pactor.impl.MessageQueue;
 import org.slf4j.Logger;
-import org.threeten.bp.Instant;
-import org.threeten.bp.ZoneId;
-import org.threeten.bp.ZoneOffset;
-import org.threeten.bp.ZonedDateTime;
 
 import com.blockwithme.tactors.MBOwner;
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
-import com.blockwithme.time.Clock;
 
 /**
  * TMailboxImpl implements the TMailbox interface.
@@ -39,27 +34,6 @@ import com.blockwithme.time.Clock;
  * @author monster
  */
 public class TMailboxImpl extends MailboxImpl implements TMailbox {
-
-    /** System Default ZoneId */
-    private static final ZoneId LOCAL = ZoneId.systemDefault();
-
-    /** The cached utc time in nanos. */
-    private long utcTime;
-
-    /** The cached Instant. */
-    private Instant instant;
-
-    /** The cached local time in nanos, as a ZonedDateTime. */
-    private ZonedDateTime localNow;
-
-    /** The cached UTC time in nanos, as a ZonedDateTime. */
-    private ZonedDateTime utcNow;
-
-    /** The cached logical time. */
-    private long logicalTime;
-
-    /** Was the time cached? */
-    private boolean timeCached;
 
     /** The owner. */
     private final AtomicReference<MBOwner<?>> owner = new AtomicReference<>();
@@ -96,61 +70,6 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     @Override
     protected void afterProcessMessage(final boolean request,
             final Message message) {
-        timeCached = false;
-    }
-
-    /** Caches the time */
-    private void cacheTime() {
-        if (!timeCached) {
-            timeCached = true;
-            final TMailboxFactory fac = getMailboxFactory();
-            utcTime = fac.currentTimeNanos(true);
-            logicalTime = fac.logicalTime();
-            localNow = utcNow = null;
-            instant = null;
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#realTime()
-     */
-    @Override
-    public final long currentTimeNanos(final boolean utc) {
-        cacheTime();
-        if (utc) {
-            return utcTime;
-        }
-        return Clock.toLocalMillis(utcTime / 1000000L) + (utcTime % 1000000L);
-    }
-
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#now(boolean)
-     */
-    @Override
-    public final ZonedDateTime now(final boolean utc) {
-        // both instant, utcNow and localNow are lazy-created, but based on frozen time.
-        if (instant == null) {
-            instant = Clock.nanosToInstant(utcTime);
-        }
-        if (utc) {
-            if (utcNow == null) {
-                utcNow = instant.atZone(ZoneOffset.UTC);
-            }
-            return utcNow;
-        }
-        if (localNow == null) {
-            localNow = instant.atZone(LOCAL);
-        }
-        return utcNow;
-    }
-
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#logicalTime()
-     */
-    @Override
-    public final long logicalTime() {
-        cacheTime();
-        return logicalTime;
     }
 
     @Override

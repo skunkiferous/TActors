@@ -15,7 +15,7 @@
  */
 package com.blockwithme.tactors.internal;
 
-import org.agilewiki.pactor.RequestBase;
+import org.agilewiki.pactor.api.RequestBase;
 
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TRequest;

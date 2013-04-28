@@ -23,13 +23,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.agilewiki.pactor.ExceptionHandler;
-import org.agilewiki.pactor.Request;
-import org.agilewiki.pactor.RequestBase;
-import org.agilewiki.pactor.ResponseProcessor;
-import org.agilewiki.pactor.UnboundRequest;
-import org.agilewiki.pamailbox.EventResponseProcessor;
-import org.agilewiki.pautil.ResponseCounter;
+import org.agilewiki.pactor.api.ExceptionHandler;
+import org.agilewiki.pactor.api.Request;
+import org.agilewiki.pactor.api.RequestBase;
+import org.agilewiki.pactor.api.ResponseProcessor;
+import org.agilewiki.pactor.api.Transport;
+import org.agilewiki.pactor.api.UnboundRequest;
+import org.agilewiki.pactor.impl.EventResponseProcessor;
+import org.agilewiki.pactor.util.ResponseCounter;
 
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
@@ -234,7 +235,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
             final TActor<?> listener, final boolean weakRef) {
         return new RequestBase<Void>(mailbox) {
             @Override
-            public void processRequest(final ResponseProcessor<Void> _rp)
+            public void processRequest(final Transport<Void> _rp)
                     throws Exception {
                 register(topic, listener, weakRef);
                 _rp.processResponse(null);
@@ -248,7 +249,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
             final TActor<?> listener) {
         return new RequestBase<Void>(mailbox) {
             @Override
-            public void processRequest(final ResponseProcessor<Void> _rp)
+            public void processRequest(final Transport<Void> _rp)
                     throws Exception {
                 unregister(topic, listener);
                 _rp.processResponse(null);
@@ -303,7 +304,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
             final UnboundRequest<Void, TARGET_ACTOR_TYPE> event) {
         return new RequestBase<Void>(mailbox) {
             @Override
-            public void processRequest(final ResponseProcessor<Void> _rp)
+            public void processRequest(final Transport<Void> _rp)
                     throws Exception {
                 informListeners(topic, event, _rp);
             }

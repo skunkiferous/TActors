@@ -17,9 +17,9 @@ package com.blockwithme.tactors.internal;
 
 import java.util.List;
 
-import org.agilewiki.pactor.Request;
-import org.agilewiki.pactor.ResponseProcessor;
-import org.agilewiki.pactor.UnboundRequest;
+import org.agilewiki.pactor.api.Request;
+import org.agilewiki.pactor.api.ResponseProcessor;
+import org.agilewiki.pactor.api.UnboundRequest;
 
 import com.blockwithme.tactors.TActor;
 

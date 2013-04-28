@@ -15,8 +15,9 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pautil.Ancestor;
-import org.agilewiki.pautil.Named;
+import org.agilewiki.pactor.api.Actor;
+import org.agilewiki.pactor.util.Ancestor;
+import org.agilewiki.pactor.util.Named;
 
 import com.blockwithme.util.IDedAndNamed;
 
@@ -27,7 +28,7 @@ import com.blockwithme.util.IDedAndNamed;
  *
  * @author monster
  */
-public interface TActor<M extends TMailbox> extends Named, Ancestor,
+public interface TActor<M extends TMailbox> extends Named, Actor, Ancestor,
         IDedAndNamed {
     /** @see org.agilewiki.pactor.Actor#getMailbox() */
     @Override
@@ -53,4 +54,7 @@ public interface TActor<M extends TMailbox> extends Named, Ancestor,
      * If the mailbox is null, the current mailbox is used.
      */
     TActor<M> copy(M mailbox);
+
+    /** Returns true, when this actor has the same Mailbox as the actor passed as parameter */
+    boolean sameMailbox(final Actor other);
 }

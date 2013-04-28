@@ -15,7 +15,7 @@
  */
 package com.blockwithme.tactors.internal;
 
-import org.agilewiki.pactor.Actor;
+import org.agilewiki.pactor.api.Actor;
 
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
@@ -115,10 +115,10 @@ public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
     }
 
     /* (non-Javadoc)
-     * @see org.agilewiki.pautil.Named#getActorName()
+     * @see org.agilewiki.pautil.Named#getName()
      */
     @Override
-    public final String getActorName() {
+    public final String getName() {
         return name;
     }
 

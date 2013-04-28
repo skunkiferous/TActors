@@ -17,15 +17,14 @@ package com.blockwithme.tactors.test;
 
 import junit.framework.TestCase;
 
-import org.agilewiki.pactor.Actor;
-import org.agilewiki.pactor.ResponseProcessor;
+import org.agilewiki.pactor.api.Actor;
+import org.agilewiki.pactor.api.Transport;
 
 import com.blockwithme.tactors.MBOwner;
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
 import com.blockwithme.tactors.TRequest;
-import com.blockwithme.tactors.internal.DefaultTimeSourceImpl;
 import com.blockwithme.tactors.internal.TActorBase;
 import com.blockwithme.tactors.internal.TMailboxFactoryImpl;
 import com.blockwithme.tactors.internal.TRequestBase;
@@ -46,7 +45,7 @@ public class TActorTest extends TestCase {
             hi1 = new TRequestBase<String>(mailbox) {
                 @Override
                 public void processRequest(
-                        final ResponseProcessor<String> responseProcessor)
+                        final Transport<String> responseProcessor)
                         throws Exception {
                     responseProcessor.processResponse("Hello world!");
                 }
@@ -63,7 +62,7 @@ public class TActorTest extends TestCase {
         public long id;
 
         @Override
-        public String getActorName() {
+        public String getName() {
             return null;
         }
 
@@ -100,10 +99,10 @@ public class TActorTest extends TestCase {
 
     TMailboxFactory mailboxFactory;
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void setUp() {
-        mailboxFactory = new TMailboxFactoryImpl(1,
-                new DefaultTimeSourceImpl(), new LongObjectCacheImpl());
+        mailboxFactory = new TMailboxFactoryImpl(1, new LongObjectCacheImpl());
     }
 
     @Override

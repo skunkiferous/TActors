@@ -15,8 +15,8 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pactor.Mailbox;
-import org.agilewiki.pamailbox.PAMailbox;
+import org.agilewiki.pactor.api.Mailbox;
+import org.agilewiki.pactor.impl.PAMailbox;
 
 /**
  * Base interface for all temporal mailboxes.
@@ -32,7 +32,7 @@ import org.agilewiki.pamailbox.PAMailbox;
  *
  * @author monster
  */
-public interface TMailbox extends PAMailbox, TimeSource {
+public interface TMailbox extends PAMailbox {
 
     /** @see org.agilewiki.pactor.Mailbox#getMailboxFactory() */
     @Override

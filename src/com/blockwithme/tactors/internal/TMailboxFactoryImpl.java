@@ -17,15 +17,13 @@ package com.blockwithme.tactors.internal;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.agilewiki.pamailbox.DefaultMailboxFactoryImpl;
-import org.agilewiki.pamailbox.MessageQueue;
+import org.agilewiki.pactor.impl.DefaultMailboxFactoryImpl;
+import org.agilewiki.pactor.impl.MessageQueue;
 import org.slf4j.Logger;
-import org.threeten.bp.ZonedDateTime;
 
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
-import com.blockwithme.tactors.TimeSource;
 import com.blockwithme.util.LongObjectCache;
 import com.google.common.base.Preconditions;
 
@@ -40,9 +38,6 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
     /** The globally unique ID for this TMailboxFactory. */
     private final long id;
 
-    /** The TimeSource to use. */
-    private final TimeSource timeSource;
-
     /** The Mailbox ID counter. */
     private final AtomicLong nextID = new AtomicLong();
 
@@ -51,35 +46,9 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
 
     /** Constructor */
     public TMailboxFactoryImpl(final long theID,
-            final TimeSource theTimeSource,
             final LongObjectCache<TActor<?>> theCache) {
         id = theID;
-        timeSource = Preconditions.checkNotNull(theTimeSource, "theTimeSource");
         actors = Preconditions.checkNotNull(theCache, "theCache");
-    }
-
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#currentTimeNanos(boolean)
-     */
-    @Override
-    public final long currentTimeNanos(final boolean utc) {
-        return timeSource.currentTimeNanos(utc);
-    }
-
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#now(boolean)
-     */
-    @Override
-    public final ZonedDateTime now(final boolean utc) {
-        return timeSource.now(utc);
-    }
-
-    /* (non-Javadoc)
-     * @see com.blockwithme.tactors.TimeSource#logicalTime()
-     */
-    @Override
-    public final long logicalTime() {
-        return timeSource.logicalTime();
     }
 
     /* (non-Javadoc)

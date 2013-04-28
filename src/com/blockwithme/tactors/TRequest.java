@@ -15,7 +15,7 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pactor.Request;
+import org.agilewiki.pactor.api.Request;
 
 /**
  * A temporal Request.

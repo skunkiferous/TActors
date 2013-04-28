@@ -15,7 +15,7 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pamailbox.PAMailboxFactory;
+import org.agilewiki.pactor.impl.PAMailboxFactory;
 
 /**
  * The TMailboxFactory produces all Mailboxes.
@@ -26,7 +26,7 @@ import org.agilewiki.pamailbox.PAMailboxFactory;
  *
  * @author monster
  */
-public interface TMailboxFactory extends PAMailboxFactory, TimeSource {
+public interface TMailboxFactory extends PAMailboxFactory {
 
     /** @see org.agilewiki.pactor.MailboxFactory#createMailbox() */
     @Override
