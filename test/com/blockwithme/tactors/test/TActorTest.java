@@ -28,6 +28,7 @@ import com.blockwithme.tactors.TRequest;
 import com.blockwithme.tactors.internal.TActorBase;
 import com.blockwithme.tactors.internal.TActorsImplModule;
 import com.blockwithme.tactors.internal.TRequestBase;
+import com.blockwithme.time.Time;
 import com.blockwithme.time.Timeline;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -107,6 +108,14 @@ public class TActorTest extends TestCase {
         @Override
         public Timeline timeline() {
             return null;
+        }
+
+        /* (non-Javadoc)
+         * @see com.blockwithme.time.TimeListener#onTimeChange(com.blockwithme.time.Time)
+         */
+        @Override
+        public void onTimeChange(final Time time) {
+
         }
     };
 

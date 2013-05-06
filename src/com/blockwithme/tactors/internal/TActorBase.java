@@ -16,6 +16,8 @@
 package com.blockwithme.tactors.internal;
 
 import org.agilewiki.jactor.api.Actor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
@@ -26,9 +28,16 @@ import com.google.common.base.Preconditions;
 /**
  * Base class to use for most TActor.
  *
+ * It can be registered as TimeListener, and the new Time will be queued as a
+ * request, to be thread-safe.
+ *
+ *
  * @author monster
  */
 public abstract class TActorBase implements TActor {
+
+    /** Logger */
+    private static final Logger LOG = LoggerFactory.getLogger(TActorBase.class);
 
     /** The actor Mailbox. */
     protected final TMailbox mailbox;
@@ -267,8 +276,30 @@ public abstract class TActorBase implements TActor {
         return timeline;
     }
 
+    /* (non-Javadoc)
+     * @see com.blockwithme.time.TimeListener#onTimeChange(com.blockwithme.time.Time)
+     */
+    @Override
+    public final void onTimeChange(final Time time) {
+        try {
+            new TimeListenerRequest(mailbox, this, time).signal();
+        } catch (final Exception e) {
+            LOG.error("Failed to send TimeListenerRequest to self: " + this, e);
+        }
+    }
+
     /** What's the time? */
     protected final Time time() {
         return timeline.lastTick();
+    }
+
+    /**
+     * Reacts to change of time. This method is called through an Actor request,
+     * and is therefore thread-safe.
+     *
+     * @see com.blockwithme.time.TimeListener#onTimeChange(com.blockwithme.time.Time)
+     */
+    protected void onAsyncTimeChange(final Time time) {
+        throw new UnsupportedOperationException("onAsyncTimeChange");
     }
 }

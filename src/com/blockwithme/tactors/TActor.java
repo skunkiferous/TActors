@@ -19,6 +19,7 @@ import org.agilewiki.jactor.api.Actor;
 import org.agilewiki.jactor.util.Ancestor;
 import org.agilewiki.jactor.util.Named;
 
+import com.blockwithme.time.TimeListener;
 import com.blockwithme.time.Timed;
 import com.blockwithme.util.IDedAndNamed;
 
@@ -29,7 +30,8 @@ import com.blockwithme.util.IDedAndNamed;
  *
  * @author monster
  */
-public interface TActor extends Named, Actor, Ancestor, IDedAndNamed, Timed {
+public interface TActor extends Named, Actor, Ancestor, IDedAndNamed, Timed,
+        TimeListener {
     /** @see org.agilewiki.jactor.api.Actor#getMailbox() */
     @Override
     public TMailbox getMailbox();
@@ -53,7 +55,7 @@ public interface TActor extends Named, Actor, Ancestor, IDedAndNamed, Timed {
      * Creates a copy of this actor, with the given new Mailbox.
      * If the mailbox is null, the current mailbox is used.
      */
-    TActor copy(TMailbox mailbox);
+    TActor copy(final TMailbox mailbox);
 
     /** Returns true, when this actor has the same Mailbox as the actor passed as parameter */
     boolean sameMailbox(final Actor other);
