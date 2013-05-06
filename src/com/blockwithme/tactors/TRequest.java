@@ -15,16 +15,21 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pactor.api.Request;
+import org.agilewiki.jactor.api.Request;
+
+import com.blockwithme.time.Time;
 
 /**
- * A temporal Request.
+ * A temporal Request. It is associated with the time at which it was created.
  *
  * @author monster
  */
 public interface TRequest<RESPONSE_TYPE> extends Request<RESPONSE_TYPE> {
 
-    /** @see org.agilewiki.pactor.Request#getMailbox() */
+    /** @see org.agilewiki.jactor.api.Request#getMailbox() */
     @Override
     TMailbox getMailbox();
+
+    /** Time at creation. */
+    Time creationTime();
 }

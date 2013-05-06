@@ -15,10 +15,12 @@
  */
 package com.blockwithme.tactors.internal;
 
-import org.agilewiki.pactor.api.Actor;
+import org.agilewiki.jactor.api.Actor;
 
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
+import com.blockwithme.time.Time;
+import com.blockwithme.time.Timeline;
 import com.google.common.base.Preconditions;
 
 /**
@@ -26,10 +28,10 @@ import com.google.common.base.Preconditions;
  *
  * @author monster
  */
-public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
+public abstract class TActorBase implements TActor {
 
     /** The actor Mailbox. */
-    protected final M mailbox;
+    protected final TMailbox mailbox;
 
     /** The actor ID. */
     protected final long id;
@@ -38,52 +40,179 @@ public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
     protected final String name;
 
     /** The actor parent, if any. */
-    protected final TActor<?> parent;
+    protected final TActor parent;
 
     /** The listeners support. */
     protected final TActorListenerSupport support;
 
+    /** The timeline. */
+    protected final Timeline timeline;
+
     /**
      * Initialize the actor with a Mailbox.
+     * Null is a valid Timeline, if you are not the future mailbox owner.
      */
-    protected TActorBase(final M theMailbox, final boolean pin) {
+    protected TActorBase(final TMailbox theMailbox, final Timeline theTimeline) {
+        this(theMailbox, null, null, false, theTimeline);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Null is a valid Timeline, if you are not the future mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final Timeline theTimeline) {
+        this(theMailbox, theName, null, false, theTimeline);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Null is a valid parent.
+     * Null is a valid Timeline, if you are not the future mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final TActor theParent, final Timeline theTimeline) {
+        this(theMailbox, theName, theParent, new TActorListenerSupportImpl(
+                theMailbox), false, theTimeline);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid Timeline, if you are not the future mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final boolean pin,
+            final Timeline theTimeline) {
+        this(theMailbox, null, null, pin, theTimeline);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Null is a valid Timeline, if you are not the future mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final boolean pin, final Timeline theTimeline) {
+        this(theMailbox, theName, null, pin, theTimeline);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Null is a valid parent.
+     * Null is a valid Timeline, if you are not the future mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final TActor theParent, final boolean pin,
+            final Timeline theTimeline) {
+        this(theMailbox, theName, theParent, new TActorListenerSupportImpl(
+                theMailbox), pin, theTimeline);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Should not be used by the mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox) {
+        this(theMailbox, null, null, false);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Should not be used by the mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final String theName) {
+        this(theMailbox, theName, null, false);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Null is a valid parent.
+     * Should not be used by the mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final TActor theParent) {
+        this(theMailbox, theName, theParent, new TActorListenerSupportImpl(
+                theMailbox), false);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Null is a valid parent.
+     * Should not be used by the mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final TActor theParent, final TActorListenerSupport theSupport) {
+        this(theMailbox, theName, theParent, theSupport, false, null);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Should not be used by the mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final boolean pin) {
         this(theMailbox, null, null, pin);
     }
 
     /**
      * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Should not be used by the mailbox owner.
      */
-    protected TActorBase(final M theMailbox, final String theName,
+    protected TActorBase(final TMailbox theMailbox, final String theName,
             final boolean pin) {
         this(theMailbox, theName, null, pin);
     }
 
     /**
      * Initialize the actor with a Mailbox.
+     * Null is a valid name.
      * Null is a valid parent.
+     * Should not be used by the mailbox owner.
      */
-    protected TActorBase(final M theMailbox, final String theName,
-            final TActor<?> theParent, final boolean pin) {
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final TActor theParent, final boolean pin) {
         this(theMailbox, theName, theParent, new TActorListenerSupportImpl(
                 theMailbox), pin);
     }
 
     /**
      * Initialize the actor with a Mailbox.
+     * Null is a valid name.
      * Null is a valid parent.
+     * Should not be used by the mailbox owner.
      */
-    protected TActorBase(final M theMailbox, final String theName,
-            final TActor<?> theParent, final TActorListenerSupport theSupport,
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final TActor theParent, final TActorListenerSupport theSupport,
             final boolean pin) {
+        this(theMailbox, theName, theParent, theSupport, pin, null);
+    }
+
+    /**
+     * Initialize the actor with a Mailbox.
+     * Null is a valid name.
+     * Null is a valid parent.
+     * Null is a valid Timeline, if you are not the future mailbox owner.
+     */
+    protected TActorBase(final TMailbox theMailbox, final String theName,
+            final TActor theParent, final TActorListenerSupport theSupport,
+            final boolean pin, final Timeline theTimeline) {
         mailbox = Preconditions.checkNotNull(theMailbox);
         support = Preconditions.checkNotNull(theSupport);
+        timeline = Preconditions
+                .checkNotNull((theTimeline == null) ? theMailbox.owner()
+                        .timeline() : theTimeline);
         name = theName;
         parent = theParent;
         id = mailbox.nextActorID(this, pin);
     }
 
     /* (non-Javadoc)
-     * @see org.agilewiki.pactor.Actor#sameMailbox(org.agilewiki.pactor.Actor)
+     * @see com.blockwithme.tactors.TActor#sameMailbox(org.agilewiki.jactor.api.Actor)
      */
     @Override
     public final boolean sameMailbox(final Actor other) {
@@ -94,7 +223,7 @@ public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
      * @see com.blockwithme.tactors.TActor#getMailbox()
      */
     @Override
-    public final M getMailbox() {
+    public final TMailbox getMailbox() {
         return mailbox;
     }
 
@@ -115,7 +244,7 @@ public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
     }
 
     /* (non-Javadoc)
-     * @see org.agilewiki.pautil.Named#getName()
+     * @see org.agilewiki.jactor.util.Named#getName()
      */
     @Override
     public final String getName() {
@@ -126,7 +255,20 @@ public abstract class TActorBase<M extends TMailbox> implements TActor<M> {
      * @see com.blockwithme.tactors.TActor#getParent()
      */
     @Override
-    public final TActor<?> getParent() {
+    public final TActor getParent() {
         return parent;
+    }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.time.Timed#timeline()
+     */
+    @Override
+    public final Timeline timeline() {
+        return timeline;
+    }
+
+    /** What's the time? */
+    protected final Time time() {
+        return timeline.lastTick();
     }
 }

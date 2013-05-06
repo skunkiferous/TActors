@@ -15,8 +15,8 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pactor.api.Mailbox;
-import org.agilewiki.pactor.impl.PAMailbox;
+import org.agilewiki.jactor.api.Mailbox;
+import org.agilewiki.jactor.impl.JAMailbox;
 
 /**
  * Base interface for all temporal mailboxes.
@@ -28,31 +28,29 @@ import org.agilewiki.pactor.impl.PAMailbox;
  *
  * TODO Now that all Mailbox are weakly referenced, we could add lifecycles to them.
  *
- * TODO Should a Mailbox be an actor too?
- *
  * @author monster
  */
-public interface TMailbox extends PAMailbox {
+public interface TMailbox extends JAMailbox {
 
-    /** @see org.agilewiki.pactor.Mailbox#getMailboxFactory() */
+    /** @see org.agilewiki.jactor.api.Mailbox#getMailboxFactory() */
     @Override
     TMailboxFactory getMailboxFactory();
 
-    /** @see org.agilewiki.pamailbox.PAMailbox#createPort(Mailbox, int) */
+    /** @see org.agilewiki.jactor.impl.JAMailbox#createPort(Mailbox, int) */
     @Override
     TMailbox createPort(final Mailbox _source, int size);
 
     /**
      * Generates the next Actor ID, register that actor under that ID,
      * and returns the ID. If the actor has a non-null name, it will be
-     * registered too.
+     * registered too. Optionally, the actor can be pinned.
      */
-    long nextActorID(TActor<?> actor, boolean pin);
+    long nextActorID(TActor actor, boolean pin);
 
     /**
      * Returns the Mailbox owner. This is the first actor created for this
      * Mailbox. The reference prevents the owner from being CGed, as long as
      * something else references the Mailbox.
      */
-    MBOwner<?> owner();
+    MBOwner owner();
 }

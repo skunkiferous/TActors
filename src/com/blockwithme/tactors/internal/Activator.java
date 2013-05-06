@@ -15,9 +15,10 @@
  */
 package com.blockwithme.tactors.internal;
 
-import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main class.
@@ -25,6 +26,10 @@ import org.osgi.framework.BundleContext;
  * @author monster
  */
 public class Activator implements BundleActivator {
+
+    /** Logger. */
+    private static final Logger LOG = LoggerFactory.getLogger(Activator.class);
+
     /**
      *
      */
@@ -41,15 +46,12 @@ public class Activator implements BundleActivator {
     @Override
     public void start(final BundleContext context) throws Exception {
         start();
-        LogFactory
-                .getLog(Activator.class)
-                .info(" **************start(final BundleContext context)****************");
+        LOG.info("TActors bundle started");
     }
 
     /** {@inheritDoc} */
     @Override
     public void stop(final BundleContext context) throws Exception {
-        // TODO Auto-generated method stub
-
+        LOG.info("TActors bundle stopped");
     }
 }

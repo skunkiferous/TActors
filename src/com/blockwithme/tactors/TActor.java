@@ -15,10 +15,11 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pactor.api.Actor;
-import org.agilewiki.pactor.util.Ancestor;
-import org.agilewiki.pactor.util.Named;
+import org.agilewiki.jactor.api.Actor;
+import org.agilewiki.jactor.util.Ancestor;
+import org.agilewiki.jactor.util.Named;
 
+import com.blockwithme.time.Timed;
 import com.blockwithme.util.IDedAndNamed;
 
 /**
@@ -28,11 +29,10 @@ import com.blockwithme.util.IDedAndNamed;
  *
  * @author monster
  */
-public interface TActor<M extends TMailbox> extends Named, Actor, Ancestor,
-        IDedAndNamed {
-    /** @see org.agilewiki.pactor.Actor#getMailbox() */
+public interface TActor extends Named, Actor, Ancestor, IDedAndNamed, Timed {
+    /** @see org.agilewiki.jactor.api.Actor#getMailbox() */
     @Override
-    public M getMailbox();
+    public TMailbox getMailbox();
 
     /**
      * Returns the Actor ID. It will be within [Long.MIN_VALUE,Long.MAX_VALUE], but not 0.
@@ -47,13 +47,13 @@ public interface TActor<M extends TMailbox> extends Named, Actor, Ancestor,
 
     /** The parent of a TActor is always another TActor, or null. */
     @Override
-    TActor<?> getParent();
+    TActor getParent();
 
     /**
      * Creates a copy of this actor, with the given new Mailbox.
      * If the mailbox is null, the current mailbox is used.
      */
-    TActor<M> copy(M mailbox);
+    TActor copy(TMailbox mailbox);
 
     /** Returns true, when this actor has the same Mailbox as the actor passed as parameter */
     boolean sameMailbox(final Actor other);

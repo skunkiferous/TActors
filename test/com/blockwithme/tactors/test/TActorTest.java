@@ -17,8 +17,8 @@ package com.blockwithme.tactors.test;
 
 import junit.framework.TestCase;
 
-import org.agilewiki.pactor.api.Actor;
-import org.agilewiki.pactor.api.Transport;
+import org.agilewiki.jactor.api.Actor;
+import org.agilewiki.jactor.api.Transport;
 
 import com.blockwithme.tactors.MBOwner;
 import com.blockwithme.tactors.TActor;
@@ -26,23 +26,24 @@ import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
 import com.blockwithme.tactors.TRequest;
 import com.blockwithme.tactors.internal.TActorBase;
-import com.blockwithme.tactors.internal.TMailboxFactoryImpl;
+import com.blockwithme.tactors.internal.TActorsImplModule;
 import com.blockwithme.tactors.internal.TRequestBase;
-import com.blockwithme.util.LongObjectCacheImpl;
+import com.blockwithme.time.Timeline;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 /**
  * Test code.
  */
 public class TActorTest extends TestCase {
-    private static class MyActor extends TActorBase<TMailbox> implements
-            MBOwner<TMailbox> {
+    private static class MyActorNonMBOwner extends TActorBase {
         public final TRequest<String> hi1;
 
-        public MyActor(final TMailbox theMailbox, final String name,
-                final boolean pin) {
-            super(theMailbox, name, pin);
+        public MyActorNonMBOwner(final TMailbox theMailbox, final String name,
+                final Timeline timeline, final boolean pin) {
+            super(theMailbox, name, pin, timeline);
 
-            hi1 = new TRequestBase<String>(mailbox) {
+            hi1 = new TRequestBase<String>(mailbox, timeline) {
                 @Override
                 public void processRequest(
                         final Transport<String> responseProcessor)
@@ -53,12 +54,19 @@ public class TActorTest extends TestCase {
         }
 
         @Override
-        public TActor<TMailbox> copy(final TMailbox mailbox) {
+        public TActor copy(final TMailbox mailbox) {
             throw new UnsupportedOperationException();
         }
     };
 
-    private static class DummyTActor implements TActor<TMailbox> {
+    private static class MyActor extends MyActorNonMBOwner implements MBOwner {
+        public MyActor(final TMailbox theMailbox, final String name,
+                final Timeline timeline, final boolean pin) {
+            super(theMailbox, name, timeline, pin);
+        }
+    }
+
+    private static class DummyTActor implements TActor {
         public long id;
 
         @Override
@@ -87,22 +95,43 @@ public class TActorTest extends TestCase {
         }
 
         @Override
-        public TActor<?> getParent() {
+        public TActor getParent() {
             return null;
         }
 
         @Override
-        public TActor<TMailbox> copy(final TMailbox mailbox) {
+        public TActor copy(final TMailbox mailbox) {
+            return null;
+        }
+
+        @Override
+        public Timeline timeline() {
             return null;
         }
     };
 
+    protected static void sleep(final long sleep) {
+        try {
+            Thread.sleep(sleep);
+        } catch (final InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected static void close(final AutoCloseable ac) {
+        try {
+            ac.close();
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     TMailboxFactory mailboxFactory;
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void setUp() {
-        mailboxFactory = new TMailboxFactoryImpl(1, new LongObjectCacheImpl());
+        final Injector injector = Guice.createInjector(new TActorsImplModule());
+        mailboxFactory = injector.getInstance(TMailboxFactory.class);
     }
 
     @Override
@@ -113,21 +142,24 @@ public class TActorTest extends TestCase {
 
     public void testCall() throws Exception {
         final TMailbox mailbox = mailboxFactory.createMailbox();
-        final MyActor actor1 = new MyActor(mailbox, null, false);
+        final MyActor actor1 = new MyActor(mailbox, null, mailboxFactory
+                .clockService().coreTimeline(), false);
         final String result = actor1.hi1.call();
         assertEquals("Hello world!", result);
     }
 
     public void testID() throws Exception {
         final TMailbox mailbox = mailboxFactory.createMailbox();
-        final MyActor actor1 = new MyActor(mailbox, null, false);
+        final MyActor actor1 = new MyActor(mailbox, null, mailboxFactory
+                .clockService().coreTimeline(), false);
         final long id = actor1.id();
         assertEquals(actor1, mailboxFactory.findActor(id));
     }
 
     public void testName() throws Exception {
         TMailbox mailbox = mailboxFactory.createMailbox();
-        MyActor actor1 = new MyActor(mailbox, "testName", false);
+        MyActor actor1 = new MyActor(mailbox, "testName", mailboxFactory
+                .clockService().coreTimeline(), false);
         mailbox = null;
         assertEquals(actor1, mailboxFactory.findActor("testName"));
         actor1 = null;
@@ -143,13 +175,15 @@ public class TActorTest extends TestCase {
 
     public void testOwner() throws Exception {
         final TMailbox mailbox = mailboxFactory.createMailbox();
-        final MyActor actor1 = new MyActor(mailbox, null, false);
+        final MyActor actor1 = new MyActor(mailbox, null, mailboxFactory
+                .clockService().coreTimeline(), false);
         assertEquals(actor1, mailbox.owner());
     }
 
     public void testPin() throws Exception {
         TMailbox mailbox = mailboxFactory.createMailbox();
-        MyActor actor1 = new MyActor(mailbox, null, true);
+        MyActor actor1 = new MyActor(mailbox, null, mailboxFactory
+                .clockService().coreTimeline(), true);
         mailbox = null;
         final long id = actor1.id();
         assertEquals(actor1, mailboxFactory.findActor(id));
@@ -167,9 +201,11 @@ public class TActorTest extends TestCase {
     public void testGC() throws Exception {
         final TMailbox mailbox = mailboxFactory.createMailbox();
         // actor1 is MB owner
-        final MyActor actor1 = new MyActor(mailbox, null, false);
+        final MyActor actor1 = new MyActor(mailbox, null, mailboxFactory
+                .clockService().coreTimeline(), false);
         final long id1 = actor1.id();
-        MyActor actor2 = new MyActor(mailbox, null, false);
+        MyActorNonMBOwner actor2 = new MyActorNonMBOwner(mailbox, null,
+                mailboxFactory.clockService().coreTimeline(), false);
         final long id2 = actor2.id();
         assertTrue(id1 != id2);
         // Now GC can work ...
@@ -188,7 +224,8 @@ public class TActorTest extends TestCase {
         final TMailbox mailbox = mailboxFactory.createMailbox();
         // actor1 is MB owner
         @SuppressWarnings("unused")
-        final MyActor actor1 = new MyActor(mailbox, "testNextActorID", false);
+        final MyActor actor1 = new MyActor(mailbox, "testNextActorID",
+                mailboxFactory.clockService().coreTimeline(), false);
 
         boolean failed = false;
         try {
@@ -213,7 +250,8 @@ public class TActorTest extends TestCase {
         failed = false;
         try {
             // Must not accept duplicate names
-            new MyActor(mailbox, "testNextActorID", false);
+            new MyActor(mailbox, "testNextActorID", mailboxFactory
+                    .clockService().coreTimeline(), false);
         } catch (final Exception e) {
             failed = true;
         }

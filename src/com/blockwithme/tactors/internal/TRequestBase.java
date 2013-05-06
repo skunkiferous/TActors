@@ -15,10 +15,12 @@
  */
 package com.blockwithme.tactors.internal;
 
-import org.agilewiki.pactor.api.RequestBase;
+import org.agilewiki.jactor.api.RequestBase;
 
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TRequest;
+import com.blockwithme.time.Time;
+import com.blockwithme.time.Timeline;
 
 /**
  * Abstract TRequest base class.
@@ -28,16 +30,37 @@ import com.blockwithme.tactors.TRequest;
 public abstract class TRequestBase<RESPONSE_TYPE> extends
         RequestBase<RESPONSE_TYPE> implements TRequest<RESPONSE_TYPE> {
 
+    /** The creation time. */
+    private final Time creationTime;
+
     /**
-     * @param _targetMailbox
+     * @param _targetMailbox The target Mailbox
+     * @param theCreationTime The creation time, coming from the *source* Mailbox
      */
-    protected TRequestBase(final TMailbox _targetMailbox) {
+    protected TRequestBase(final TMailbox _targetMailbox,
+            final Time theCreationTime) {
         super(_targetMailbox);
+        creationTime = theCreationTime;
     }
 
-    /** @see org.agilewiki.pactor.Request#getMailbox() */
+    /**
+     * @param _targetMailbox The target Mailbox
+     * @param timeline The timeline, coming from the *source* Mailbox
+     */
+    protected TRequestBase(final TMailbox _targetMailbox,
+            final Timeline timeline) {
+        super(_targetMailbox);
+        creationTime = (timeline == null) ? null : timeline.lastTick();
+    }
+
+    /** @see org.agilewiki.jactor.Request#getMailbox() */
     @Override
     public TMailbox getMailbox() {
         return (TMailbox) super.getMailbox();
+    }
+
+    @Override
+    public Time creationTime() {
+        return creationTime;
     }
 }

@@ -17,9 +17,9 @@ package com.blockwithme.tactors.internal;
 
 import java.util.List;
 
-import org.agilewiki.pactor.api.Request;
-import org.agilewiki.pactor.api.ResponseProcessor;
-import org.agilewiki.pactor.api.UnboundRequest;
+import org.agilewiki.jactor.api.Request;
+import org.agilewiki.jactor.api.ResponseProcessor;
+import org.agilewiki.jactor.api.UnboundRequest;
 
 import com.blockwithme.tactors.TActor;
 
@@ -41,7 +41,7 @@ public interface TActorListenerSupport {
      * The topic cannot be null. The listener cannot be null.
      * The listener must not already have been registered to this topic.
      */
-    void register(final Object topic, final TActor<?> listener,
+    void register(final Object topic, final TActor listener,
             final boolean weakRef);
 
     /**
@@ -52,7 +52,7 @@ public interface TActorListenerSupport {
      *
      * @return true on success.
      */
-    boolean unregister(final Object topic, final TActor<?> listener);
+    boolean unregister(final Object topic, final TActor listener);
 
     /**
      * Process the queue of weak references to listeners.
@@ -70,14 +70,14 @@ public interface TActorListenerSupport {
      * The registry is NOT thread-safe, and so this can only be called from
      * within the actor mailbox context.
      */
-    List<TActor<?>> listenersFor(final Object topic);
+    List<TActor> listenersFor(final Object topic);
 
     /** Creates and returns a new Request to perform a registration. */
-    Request<Void> registerRequest(final Object topic, final TActor<?> listener,
+    Request<Void> registerRequest(final Object topic, final TActor listener,
             final boolean weakRef);
 
     /** Creates and returns a new Request to perform an un-registration. */
-    Request<Void> unregisterRequest(final Object topic, final TActor<?> listener);
+    Request<Void> unregisterRequest(final Object topic, final TActor listener);
 
     /**
      * Inform the listeners of a topic about an event (Request).
@@ -87,15 +87,14 @@ public interface TActorListenerSupport {
      * The registry is NOT thread-safe, and so this can only be called from
      * within the actor mailbox context.
      */
-    <TARGET_ACTOR_TYPE extends TActor<?>> void informListeners(
-            final Object topic,
+    <TARGET_ACTOR_TYPE extends TActor> void informListeners(final Object topic,
             final UnboundRequest<Void, TARGET_ACTOR_TYPE> event,
             final ResponseProcessor<Void> rp) throws Exception;
 
     /**
      * Creates a new Request, to inform the listeners of a topic about an event (Request).
      */
-    <TARGET_ACTOR_TYPE extends TActor<?>> Request<Void> informListenersRequest(
+    <TARGET_ACTOR_TYPE extends TActor> Request<Void> informListenersRequest(
             final Object topic,
             final UnboundRequest<Void, TARGET_ACTOR_TYPE> event);
 }

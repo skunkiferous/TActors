@@ -17,10 +17,10 @@ package com.blockwithme.tactors.internal;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.agilewiki.pactor.api.Mailbox;
-import org.agilewiki.pactor.impl.MailboxImpl;
-import org.agilewiki.pactor.impl.Message;
-import org.agilewiki.pactor.impl.MessageQueue;
+import org.agilewiki.jactor.api.Mailbox;
+import org.agilewiki.jactor.impl.MailboxImpl;
+import org.agilewiki.jactor.impl.Message;
+import org.agilewiki.jactor.impl.MessageQueue;
 import org.slf4j.Logger;
 
 import com.blockwithme.tactors.MBOwner;
@@ -36,7 +36,7 @@ import com.blockwithme.tactors.TMailboxFactory;
 public class TMailboxImpl extends MailboxImpl implements TMailbox {
 
     /** The owner. */
-    private final AtomicReference<MBOwner<?>> owner = new AtomicReference<>();
+    private final AtomicReference<MBOwner> owner = new AtomicReference<>();
 
     /**
      * @param _mayBlock
@@ -73,7 +73,7 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
     }
 
     @Override
-    public final MBOwner<?> owner() {
+    public final MBOwner owner() {
         return owner.get();
     }
 
@@ -83,10 +83,15 @@ public class TMailboxImpl extends MailboxImpl implements TMailbox {
      * registered too.
      */
     @Override
-    public final long nextActorID(final TActor<?> actor, final boolean pin) {
-        if (actor instanceof MBOwner<?>) {
+    public final long nextActorID(final TActor actor, final boolean pin) {
+        if (actor instanceof MBOwner) {
             // owner will only be set for the first registered actor.
-            owner.compareAndSet(null, (MBOwner<?>) actor);
+            if (!owner.compareAndSet(null, (MBOwner) actor)) {
+                throw new IllegalArgumentException(
+                        "Actor "
+                                + actor
+                                + " is a MBOwner, but not the first actor to use the Mailbox");
+            }
         } else if (owner.get() == null) {
             throw new IllegalStateException(
                     "First registered actor is not a MBOwner");

@@ -17,13 +17,17 @@ package com.blockwithme.tactors.internal;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.agilewiki.pactor.impl.DefaultMailboxFactoryImpl;
-import org.agilewiki.pactor.impl.MessageQueue;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.agilewiki.jactor.impl.DefaultMailboxFactoryImpl;
+import org.agilewiki.jactor.impl.MessageQueue;
 import org.slf4j.Logger;
 
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
 import com.blockwithme.tactors.TMailboxFactory;
+import com.blockwithme.time.ClockService;
 import com.blockwithme.util.LongObjectCache;
 import com.google.common.base.Preconditions;
 
@@ -35,6 +39,9 @@ import com.google.common.base.Preconditions;
 public class TMailboxFactoryImpl<M extends TMailbox> extends
         DefaultMailboxFactoryImpl<M> implements TMailboxFactory {
 
+    /** The ClockService. */
+    private final ClockService clockService;
+
     /** The globally unique ID for this TMailboxFactory. */
     private final long id;
 
@@ -42,13 +49,17 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
     private final AtomicLong nextID = new AtomicLong();
 
     /** All the actors. */
-    private final LongObjectCache<TActor<?>> actors;
+    private final LongObjectCache<TActor> actors;
 
     /** Constructor */
-    public TMailboxFactoryImpl(final long theID,
-            final LongObjectCache<TActor<?>> theCache) {
+    @Inject
+    public TMailboxFactoryImpl(@Named("MailboxFactoryID") final long theID,
+            final LongObjectCache<TActor> theCache,
+            final ClockService theClockService) {
         id = theID;
         actors = Preconditions.checkNotNull(theCache, "theCache");
+        clockService = Preconditions.checkNotNull(theClockService,
+                "theClockService");
     }
 
     /* (non-Javadoc)
@@ -60,7 +71,7 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
     }
 
     @Override
-    public long nextActorID(final TActor<?> actor, final boolean pin) {
+    public long nextActorID(final TActor actor, final boolean pin) {
         if (actor.id() != 0) {
             throw new IllegalStateException("Actor already registered! "
                     + actor);
@@ -75,12 +86,12 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
     }
 
     @Override
-    public TActor<?> findActor(final long actorID) {
+    public TActor findActor(final long actorID) {
         return actors.findObject(actorID);
     }
 
     @Override
-    public TActor<?> findActor(final String name) {
+    public TActor findActor(final String name) {
         return actors.findObject(name);
     }
 
@@ -96,5 +107,13 @@ public class TMailboxFactoryImpl<M extends TMailbox> extends
             final Logger _log, final int _initialBufferSize) {
         return (M) new TMailboxImpl(_mayBlock, _onIdle, _messageProcessor,
                 this, messageQueue, _log, _initialBufferSize);
+    }
+
+    /* (non-Javadoc)
+     * @see com.blockwithme.time.ClockServiceSource#clockService()
+     */
+    @Override
+    public ClockService clockService() {
+        return clockService;
     }
 }

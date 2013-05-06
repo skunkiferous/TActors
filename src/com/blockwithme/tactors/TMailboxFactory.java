@@ -15,45 +15,45 @@
  */
 package com.blockwithme.tactors;
 
-import org.agilewiki.pactor.impl.PAMailboxFactory;
+import org.agilewiki.jactor.impl.JAMailboxFactory;
+
+import com.blockwithme.time.ClockServiceSource;
 
 /**
  * The TMailboxFactory produces all Mailboxes.
  *
  * Typically, there would be one per JVM, or one per application, in an application server.
  *
- * TODO Should a TMailboxFactory be an actor too?
- *
  * @author monster
  */
-public interface TMailboxFactory extends PAMailboxFactory {
+public interface TMailboxFactory extends JAMailboxFactory, ClockServiceSource {
 
-    /** @see org.agilewiki.pactor.MailboxFactory#createMailbox() */
+    /** @see org.agilewiki.jactor.api.MailboxFactory#createMailbox() */
     @Override
     TMailbox createMailbox();
 
-    /** @see org.agilewiki.pactor.MailboxFactory#createMailbox(boolean) */
+    /** @see org.agilewiki.jactor.api.MailboxFactory#createMailbox(boolean) */
     @Override
     TMailbox createMailbox(final boolean mayBlock);
 
-    /** @see org.agilewiki.pactor.MailboxFactory#createMailbox(int) */
+    /** @see org.agilewiki.jactor.api.MailboxFactory#createMailbox(int) */
     @Override
     TMailbox createMailbox(final int initialBufferSize);
 
-    /** @see org.agilewiki.pactor.MailboxFactory#createMailbox(boolean, int) */
+    /** @see org.agilewiki.jactor.api.MailboxFactory#createMailbox(boolean, int) */
     @Override
     TMailbox createMailbox(final boolean mayBlock, final int initialBufferSize);
 
-    /** @see org.agilewiki.pactor.MailboxFactory#createMailbox(boolean, Runnable) */
+    /** @see org.agilewiki.jactor.api.MailboxFactory#createMailbox(boolean, Runnable) */
     @Override
     TMailbox createMailbox(final boolean mayBlock, final Runnable onIdle);
 
-    /** @see org.agilewiki.pactor.MailboxFactory#createMailbox(boolean, int, Runnable) */
+    /** @see org.agilewiki.jactor.api.MailboxFactory#createMailbox(boolean, int, Runnable) */
     @Override
     TMailbox createMailbox(final boolean mayBlock, final int initialBufferSize,
             final Runnable onIdle);
 
-    /** @see org.agilewiki.pactor.MailboxFactory#createThreadBoundMailbox(Runnable) */
+    /** @see org.agilewiki.jactor.api.MailboxFactory#createThreadBoundMailbox(Runnable) */
     @Override
     TMailbox createThreadBoundMailbox(final Runnable _messageProcessor);
 
@@ -69,12 +69,12 @@ public interface TMailboxFactory extends PAMailboxFactory {
      * and returns the ID. If the actor has a non-null name, it will be
      * registered too.
      */
-    long nextActorID(TActor<?> actor, boolean pin);
+    long nextActorID(TActor actor, boolean pin);
 
     /** Returns the actor with the given ID, if any. */
-    TActor<?> findActor(long id);
+    TActor findActor(long id);
 
     /** Returns the actor with the given name, if any. */
-    TActor<?> findActor(String name);
+    TActor findActor(String name);
 
 }

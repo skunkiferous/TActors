@@ -23,14 +23,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.agilewiki.pactor.api.ExceptionHandler;
-import org.agilewiki.pactor.api.Request;
-import org.agilewiki.pactor.api.RequestBase;
-import org.agilewiki.pactor.api.ResponseProcessor;
-import org.agilewiki.pactor.api.Transport;
-import org.agilewiki.pactor.api.UnboundRequest;
-import org.agilewiki.pactor.impl.EventResponseProcessor;
-import org.agilewiki.pactor.util.ResponseCounter;
+import org.agilewiki.jactor.api.ExceptionHandler;
+import org.agilewiki.jactor.api.Request;
+import org.agilewiki.jactor.api.RequestBase;
+import org.agilewiki.jactor.api.ResponseProcessor;
+import org.agilewiki.jactor.api.Transport;
+import org.agilewiki.jactor.api.UnboundRequest;
+import org.agilewiki.jactor.impl.EventResponseProcessor;
+import org.agilewiki.jactor.util.ResponseCounter;
 
 import com.blockwithme.tactors.TActor;
 import com.blockwithme.tactors.TMailbox;
@@ -45,16 +45,15 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
 
     /** WeakReference with topic, so we can do quick remove on GC. */
     private static final class WeakReferenceWithTopic extends
-            WeakReference<TActor<?>> {
+            WeakReference<TActor> {
 
         public final Object topic;
 
         /**
          * @param referent
          */
-        public WeakReferenceWithTopic(final Object theTopic,
-                final TActor<?> obj,
-                final ReferenceQueue<? super TActor<?>> queue) {
+        public WeakReferenceWithTopic(final Object theTopic, final TActor obj,
+                final ReferenceQueue<? super TActor> queue) {
             super(obj, queue);
             topic = theTopic;
         }
@@ -86,7 +85,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
      * The listener must not already have been registered to this topic.
      */
     @Override
-    public final void register(final Object topic, final TActor<?> listener,
+    public final void register(final Object topic, final TActor listener,
             final boolean weakRef) {
         Preconditions.checkNotNull(topic, "topic cannot be null");
         Preconditions.checkNotNull(listener, "listener cannot be null");
@@ -129,7 +128,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
      * @return true on success.
      */
     @Override
-    public final boolean unregister(final Object topic, final TActor<?> listener) {
+    public final boolean unregister(final Object topic, final TActor listener) {
         Preconditions.checkNotNull(topic, "topic cannot be null");
         Preconditions.checkNotNull(listener, "listener cannot be null");
         if (listeners != null) {
@@ -199,24 +198,24 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
      * within the actor mailbox context.
      */
     @Override
-    public final List<TActor<?>> listenersFor(final Object topic) {
+    public final List<TActor> listenersFor(final Object topic) {
         Preconditions.checkNotNull(topic, "topic cannot be null");
         if (listeners != null) {
             final List<Object> list = listeners.get(topic);
             if (list != null) {
-                final List<TActor<?>> result = new ArrayList<>(list.size());
+                final List<TActor> result = new ArrayList<>(list.size());
                 boolean processQueue = false;
                 for (final Object obj : list) {
                     if (obj instanceof WeakReferenceWithTopic) {
                         final WeakReferenceWithTopic ref = (WeakReferenceWithTopic) obj;
-                        final TActor<?> actor = ref.get();
+                        final TActor actor = ref.get();
                         if (actor == null) {
                             processQueue = true;
                         } else {
                             result.add(actor);
                         }
                     } else {
-                        final TActor<?> actor = (TActor<?>) obj;
+                        final TActor actor = (TActor) obj;
                         result.add(actor);
                     }
                 }
@@ -232,7 +231,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
     /** Creates and returns a new Request to perform a registration. */
     @Override
     public final Request<Void> registerRequest(final Object topic,
-            final TActor<?> listener, final boolean weakRef) {
+            final TActor listener, final boolean weakRef) {
         return new RequestBase<Void>(mailbox) {
             @Override
             public void processRequest(final Transport<Void> _rp)
@@ -246,7 +245,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
     /** Creates and returns a new Request to perform an un-registration. */
     @Override
     public final Request<Void> unregisterRequest(final Object topic,
-            final TActor<?> listener) {
+            final TActor listener) {
         return new RequestBase<Void>(mailbox) {
             @Override
             public void processRequest(final Transport<Void> _rp)
@@ -266,13 +265,13 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
      * within the actor mailbox context.
      */
     @Override
-    public final <TARGET_ACTOR_TYPE extends TActor<?>> void informListeners(
+    public final <TARGET_ACTOR_TYPE extends TActor> void informListeners(
             final Object topic,
             final UnboundRequest<Void, TARGET_ACTOR_TYPE> event,
             final ResponseProcessor<Void> rp) throws Exception {
-        final List<TActor<?>> actors = listenersFor(topic);
+        final List<TActor> actors = listenersFor(topic);
         if ((rp == null) || (rp == EventResponseProcessor.SINGLETON)) {
-            for (final TActor<?> actor : actors) {
+            for (final TActor actor : actors) {
                 @SuppressWarnings("unchecked")
                 final TARGET_ACTOR_TYPE listener = (TARGET_ACTOR_TYPE) actor;
                 event.signal(listener);
@@ -287,7 +286,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
                     rc.decrementCount();
                 }
             });
-            for (final TActor<?> actor : actors) {
+            for (final TActor actor : actors) {
                 @SuppressWarnings("unchecked")
                 final TARGET_ACTOR_TYPE listener = (TARGET_ACTOR_TYPE) actor;
                 event.send(mailbox, listener, rc);
@@ -299,7 +298,7 @@ public class TActorListenerSupportImpl implements TActorListenerSupport {
      * Creates a new Request, to inform the listeners of a topic about an event (Request).
      */
     @Override
-    public final <TARGET_ACTOR_TYPE extends TActor<?>> Request<Void> informListenersRequest(
+    public final <TARGET_ACTOR_TYPE extends TActor> Request<Void> informListenersRequest(
             final Object topic,
             final UnboundRequest<Void, TARGET_ACTOR_TYPE> event) {
         return new RequestBase<Void>(mailbox) {

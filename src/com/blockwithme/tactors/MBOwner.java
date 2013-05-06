@@ -23,8 +23,10 @@ package com.blockwithme.tactors;
  * The goal of this interface is to force users to remember that the first
  * actor is the owner, *and gets a hard reference* from the mailbox.
  *
+ * Only the Mailbox owner is allowed to implement this interface.
+ *
  * @author monster
  */
-public interface MBOwner<M extends TMailbox> extends TActor<M> {
+public interface MBOwner extends TActor {
     // NOP
 }
